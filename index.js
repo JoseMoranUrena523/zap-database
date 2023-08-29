@@ -19,10 +19,10 @@ app.use(cors());
 
 (async () => {
   const mysql = new MySQLDriver({
-    host: "localhost",
-    user: "me",
-    password: "secret",
-    database: "my_db",
+    host: "zap-database.c3lajz9qzkbd.us-east-2.rds.amazonaws.com:3306",
+    user: "admin",
+    password: "zapPassword",
+    database: "zap-database",
   });
 
   await mysql.connect();
