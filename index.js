@@ -22,7 +22,7 @@ app.use(cors());
     host: "zap-database.c3lajz9qzkbd.us-east-2.rds.amazonaws.com",
     user: "admin",
     password: "zapPassword",
-    database: "zap-database",
+    database: "zap",
   });
 
   await mysql.connect();
