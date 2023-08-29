@@ -18,14 +18,7 @@ app.use(checkApiKey);
 app.use(cors());
 
 (async () => {
-  const mysql = new MySQLDriver({
-    host: "zap-database.c3lajz9qzkbd.us-east-2.rds.amazonaws.com",
-    user: "admin",
-    password: "zapPassword",
-    database: "zap",
-    port: 3306,
-    ssl: "Amazon RDS"
-  });
+  const mysql = new MySQLDriver("mysql://admin:zapPassword@zap-instance.c3lajz9qzkbd.us-east-2.rds.amazonaws.com:3306/zap");
 
   await mysql.connect();
 
