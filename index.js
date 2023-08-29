@@ -29,7 +29,7 @@ app.use(cors());
 
   const db = new QuickDB({ driver: mysql });
 
-  app.get('/', (req, res) => {
+  app.get('/', async (req, res) => {
     const manual = {
       endpoints: [
         { method: 'GET', path: '/get?key=<key>', description: 'Retrieve the value associated with the provided key' },
@@ -42,7 +42,7 @@ app.use(cors());
   });
   
   // GET endpoint
-  app.get('/get', (req, res) => {
+  app.get('/get', async (req, res) => {
     try {
       const key = req.query.key;
       const value = await db.get(key);
@@ -58,7 +58,7 @@ app.use(cors());
   });
   
   // POST endpoint
-  app.post('/add', (req, res) => {
+  app.post('/add', async (req, res) => {
     try {
       const { key, value } = req.body;
       if (!key || !value) {
@@ -73,7 +73,7 @@ app.use(cors());
   });
   
   // DELETE endpoint
-  app.delete('/remove', (req, res) => {
+  app.delete('/remove', async (req, res) => {
     try {
       const key = req.query.key;
       const existingValue = await db.get(key);
@@ -90,7 +90,7 @@ app.use(cors());
   });
   
   // List all entries endpoint
-  app.get('/list', (req, res) => {
+  app.get('/list', async(req, res) => {
     try {
       const entries = await db.all();
       res.json({ entries });
@@ -98,7 +98,6 @@ app.use(cors());
       res.status(500).json({ error: 'An error occurred while processing the request.' });
     }
   });
-
 })();
 
 app.listen(process.env.PORT, () => {
