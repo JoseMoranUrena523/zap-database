@@ -23,6 +23,8 @@ app.use(cors());
     user: "admin",
     password: "zapPassword",
     database: "zap",
+    port: 3306,
+    ssl: "Amazon RDS"
   });
 
   await mysql.connect();
