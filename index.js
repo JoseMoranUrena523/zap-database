@@ -1,8 +1,6 @@
 const express = require('express');
-const { QuickDB } = require('quick.db');
+const { QuickDB, MySQLDriver } = require("quick.db");
 const cors = require('cors');
-
-const db = new QuickDB();
 const app = express();
 
 const apiKey = '!apiKeyForZapInterface12312!';
@@ -19,76 +17,89 @@ app.use(express.json());
 app.use(checkApiKey);
 app.use(cors());
 
-// Manual endpoint
-app.get('/', (req, res) => {
-  const manual = {
-    endpoints: [
-      { method: 'GET', path: '/get?key=<key>', description: 'Retrieve the value associated with the provided key' },
-      { method: 'POST', path: '/add', description: 'Add a key-value pair to the database (body: { "key": "<key>", "value": "<value>" })' },
-      { method: 'DELETE', path: '/remove?key=<key>', description: 'Remove a key-value pair from the database' },
-      { method: 'GET', path: '/list', description: 'List all entries in the database' },
-    ]
-  };
-  res.json(manual);
-});
+(async () => {
+  const mysql = new MySQLDriver({
+    host: "localhost",
+    user: "me",
+    password: "secret",
+    database: "my_db",
+  });
 
-// GET endpoint
-app.get('/get', async (req, res) => {
-  try {
-    const key = req.query.key;
-    const value = await db.get(key);
-    
-    if (value === null) {
-      return res.status(404).json({ error: 'Key Not Found' });
+  await mysql.connect();
+
+  const db = new QuickDB({ driver: mysql });
+
+  app.get('/', (req, res) => {
+    const manual = {
+      endpoints: [
+        { method: 'GET', path: '/get?key=<key>', description: 'Retrieve the value associated with the provided key' },
+        { method: 'POST', path: '/add', description: 'Add a key-value pair to the database (body: { "key": "<key>", "value": "<value>" })' },
+        { method: 'DELETE', path: '/remove?key=<key>', description: 'Remove a key-value pair from the database' },
+        { method: 'GET', path: '/list', description: 'List all entries in the database' },
+      ]
+    };
+    res.json(manual);
+  });
+  
+  // GET endpoint
+  app.get('/get', (req, res) => {
+    try {
+      const key = req.query.key;
+      const value = await db.get(key);
+      
+      if (value === null) {
+        return res.status(404).json({ error: 'Key Not Found' });
+      }
+      
+      res.json({ "data": value });
+    } catch (error) {
+      res.status(500).json({ error: 'An error occurred while processing the request.' });
     }
-    
-    res.json({ "data": value });
-  } catch (error) {
-    res.status(500).json({ error: 'An error occurred while processing the request.' });
-  }
-});
-
-// POST endpoint
-app.post('/add', async (req, res) => {
-  try {
-    const { key, value } = req.body;
-    if (!key || !value) {
-      return res.status(400).json({ error: 'Both key and value are required.' });
+  });
+  
+  // POST endpoint
+  app.post('/add', (req, res) => {
+    try {
+      const { key, value } = req.body;
+      if (!key || !value) {
+        return res.status(400).json({ error: 'Both key and value are required.' });
+      }
+  
+      await db.set(key, value);
+      res.json({ message: `Key "${key}" was added!` });
+    } catch (error) {
+      res.status(500).json({ error: 'An error occurred while processing the request.' });
     }
-
-    await db.set(key, value);
-    res.json({ message: `Key "${key}" was added!` });
-  } catch (error) {
-    res.status(500).json({ error: 'An error occurred while processing the request.' });
-  }
-});
-
-// DELETE endpoint
-app.delete('/remove', async (req, res) => {
-  try {
-    const key = req.query.key;
-    const existingValue = await db.get(key);
-
-    if (existingValue === null) {
-      return res.status(404).json({ error: 'Key Not Found' });
+  });
+  
+  // DELETE endpoint
+  app.delete('/remove', (req, res) => {
+    try {
+      const key = req.query.key;
+      const existingValue = await db.get(key);
+  
+      if (existingValue === null) {
+        return res.status(404).json({ error: 'Key Not Found' });
+      }
+  
+      await db.delete(key);
+      res.json({ message: `Key "${key}" is removed!` });
+    } catch (error) {
+      res.status(500).json({ error: 'An error occurred while processing the request.' });
     }
+  });
+  
+  // List all entries endpoint
+  app.get('/list', (req, res) => {
+    try {
+      const entries = await db.all();
+      res.json({ entries });
+    } catch (error) {
+      res.status(500).json({ error: 'An error occurred while processing the request.' });
+    }
+  });
 
-    await db.delete(key);
-    res.json({ message: `Key "${key}" is removed!` });
-  } catch (error) {
-    res.status(500).json({ error: 'An error occurred while processing the request.' });
-  }
-});
-
-// List all entries endpoint
-app.get('/list', async (req, res) => {
-  try {
-    const entries = await db.all();
-    res.json({ entries });
-  } catch (error) {
-    res.status(500).json({ error: 'An error occurred while processing the request.' });
-  }
-});
+})();
 
 app.listen(process.env.PORT, () => {
   console.log("App is running!");
